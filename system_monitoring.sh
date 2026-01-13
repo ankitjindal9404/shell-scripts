@@ -27,7 +27,7 @@ echo $DISK_USAGE
 
 timestamp=$(date +%"F %T")
 
-WEBHOOK_URL="https://hooks.slack.com/services/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"
+WEBHOOK_URL="enter a slack webhook url"
 
 #function for notification
 notify_slack() {
