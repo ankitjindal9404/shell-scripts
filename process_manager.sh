@@ -2,8 +2,6 @@
 
 # Process Management Script
 
-set -e  # Exit on error
-
 process_action=$1
 
 case $process_action in
@@ -32,31 +30,41 @@ case $process_action in
         ;;
     Monitor)
         read -p "Enter PID or Process Name: " input
-    
-    # Check if input is a number (PID)
-    if [[ "$input" =~ ^[0-9]+$ ]]; then
-        # It's a PID
-        if ps -p "$input" > /dev/null 2>&1; then
-            echo "Process with PID $input is RUNNING"
-            echo "Number of instances: 1"
-            echo "Details:"
-            ps -p "$input" -o pid,comm,stat
-        else
-            echo "Process with PID $input is NOT running"
+
+        # Check if input is empty
+        if [ -z "$input" ]; then
+            echo "Error: No input provided"
+            exit 1
         fi
-    else
-        # It's a process name
-        count=$(pgrep -c "$input" 2>/dev/null)
+    
+        # Check if input is a number (PID)
+        if [[ "$input" =~ ^[0-9]+$ ]]; then
+            # It's a PID
+            if ps -p "$input" > /dev/null 2>&1; then
+                echo "Process with PID $input is RUNNING"
+                echo "Number of instances: 1"
+                echo "Details:"
+                ps -p "$input" -o pid,comm,%cpu,%mem,stat
+            else
+                echo "Process with PID $input is NOT running"
+            fi
+        else
+            # It's a process name
+            pids=$(pgrep -f "$input" 2>/dev/null)
+
+            # Check if pids is empty
+            if [ -z "$pids" ]; then
+                echo "Process matching '$input' is NOT running"
+                exit 1
+            fi
+            count=$(echo "$pids" | wc -l)
         
-        if [ "$count" -gt 0 ]; then
-            echo "Process '$input' is RUNNING"
+            echo "Process matching '$input' is RUNNING"
             echo "Number of instances: $count"
             echo "Details:"
-            pgrep -l "$input"
-        else
-            echo "Process '$input' is NOT running"
+            echo "$pids" | xargs ps -o pid,comm,%cpu,%mem,stat -p 2>/dev/null
+
         fi
-    fi
         ;;
     *)
         echo "Invalid Action!"
